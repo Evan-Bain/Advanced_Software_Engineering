@@ -1,0 +1,97 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Equipment API Documentation</title>
+</head>
+<body>
+    <h1>Equipment API Documentation</h1>
+    <p><strong>Base URL:</strong> http://ec2-3-138-156-77.us-east-2.compute.amazonaws.com/api</p>
+    <p>All endpoints return JSON with success, message, and data. Error responses never return blank data.</p>
+
+    <h2>Common Status Codes</h2>
+    <ul>
+        <li>200: Successful read or update.</li>
+        <li>201: Successful create.</li>
+        <li>400: Missing or invalid input.</li>
+        <li>404: Requested row was not found.</li>
+        <li>405: HTTP method is not allowed.</li>
+        <li>409: Duplicate name or serial number.</li>
+        <li>500: Database error.</li>
+    </ul>
+
+    <h2>Add New Equipment</h2>
+    <p><strong>Endpoint:</strong> POST /equipment.php</p>
+    <p><strong>Required parameters:</strong> device_type_id, manufacturer_id, serial_number.</p>
+    <p><strong>Success message:</strong> Equipment was added successfully.</p>
+    <p><strong>Failure messages:</strong> Serial number must match SN- followed by 64 uppercase hex characters. That serial number already exists. Selected device type is not active. Selected manufacturer is not active.</p>
+
+    <h2>Add New Device Type</h2>
+    <p><strong>Endpoint:</strong> POST /device_types.php</p>
+    <p><strong>Required parameters:</strong> type_name.</p>
+    <p><strong>Success message:</strong> Device type was added successfully.</p>
+    <p><strong>Failure messages:</strong> Device type name may only contain alphabet letters and spaces. That device type already exists.</p>
+
+    <h2>Add New Manufacturer</h2>
+    <p><strong>Endpoint:</strong> POST /manufacturers.php</p>
+    <p><strong>Required parameters:</strong> manufacturer_name.</p>
+    <p><strong>Success message:</strong> Manufacturer was added successfully.</p>
+    <p><strong>Failure messages:</strong> Manufacturer name may only contain alphabet letters and spaces. That manufacturer already exists.</p>
+
+    <h2>Search Equipment By Device Type</h2>
+    <p><strong>Endpoint:</strong> GET /equipment.php</p>
+    <p><strong>Required parameters:</strong> search_mode=device_type, device_type_id.</p>
+    <p><strong>Optional parameters:</strong> manufacturer_id as an ID or all, status as active, inactive, or all.</p>
+    <p><strong>Success message:</strong> Equipment search returned successfully. Results are limited to 1000 records.</p>
+    <p><strong>No results message:</strong> No equipment matched the search criteria.</p>
+
+    <h2>Search Equipment By Manufacturer</h2>
+    <p><strong>Endpoint:</strong> GET /equipment.php</p>
+    <p><strong>Required parameters:</strong> search_mode=manufacturer, manufacturer_id.</p>
+    <p><strong>Optional parameters:</strong> device_type_id as an ID or all, status as active, inactive, or all.</p>
+    <p><strong>Success message:</strong> Equipment search returned successfully. Results are limited to 1000 records.</p>
+    <p><strong>No results message:</strong> No equipment matched the search criteria.</p>
+
+    <h2>Search Equipment By Serial Number</h2>
+    <p><strong>Endpoint:</strong> GET /equipment.php</p>
+    <p><strong>Required parameters:</strong> search_mode=serial_number, serial_number.</p>
+    <p><strong>Optional parameters:</strong> status as active, inactive, or all.</p>
+    <p><strong>Success message:</strong> Equipment search returned successfully. Results are limited to 1000 records.</p>
+    <p><strong>No results message:</strong> No equipment matched the search criteria.</p>
+
+    <h2>List Equipment For Selection</h2>
+    <p><strong>Endpoint:</strong> GET /equipment.php?search_mode=all&amp;status=active</p>
+    <p><strong>Output:</strong> Up to 1000 active equipment rows for external-site selection lists.</p>
+
+    <h2>View Single Equipment Entry</h2>
+    <p><strong>Endpoint:</strong> GET /equipment.php</p>
+    <p><strong>Required parameters:</strong> device_id.</p>
+    <p><strong>Success output includes:</strong> type_name, manufacturer_name, serial_number, status.</p>
+    <p><strong>Failure message:</strong> Equipment was not found for the provided device_id.</p>
+
+    <h2>Modify Equipment</h2>
+    <p><strong>Endpoint:</strong> PUT /equipment.php</p>
+    <p><strong>Required parameters:</strong> device_id, device_type_id, manufacturer_id, serial_number, status.</p>
+    <p><strong>Success message:</strong> Equipment was updated successfully.</p>
+    <p><strong>Failure messages:</strong> That serial number already exists for another equipment record. Serial number must match SN- followed by 64 uppercase hex characters. Selected device type is not active. Selected manufacturer is not active.</p>
+
+    <h2>Modify Device Type</h2>
+    <p><strong>Endpoint:</strong> PUT /device_types.php</p>
+    <p><strong>Required parameters:</strong> device_type_id, type_name, status.</p>
+    <p><strong>Success message:</strong> Device type was updated successfully.</p>
+    <p><strong>Failure messages:</strong> That device type name already belongs to another row. Device type name may only contain alphabet letters and spaces.</p>
+
+    <h2>Modify Manufacturer</h2>
+    <p><strong>Endpoint:</strong> PUT /manufacturers.php</p>
+    <p><strong>Required parameters:</strong> manufacturer_id, manufacturer_name, status.</p>
+    <p><strong>Success message:</strong> Manufacturer was updated successfully.</p>
+    <p><strong>Failure messages:</strong> That manufacturer name already belongs to another row. Manufacturer name may only contain alphabet letters and spaces.</p>
+
+    <h2>Active Device Type Selection Data</h2>
+    <p><strong>Endpoint:</strong> GET /device_types.php?status=active</p>
+    <p><strong>Output:</strong> Active device types for external-site dropdowns.</p>
+
+    <h2>Active Manufacturer Selection Data</h2>
+    <p><strong>Endpoint:</strong> GET /manufacturers.php?status=active</p>
+    <p><strong>Output:</strong> Active manufacturers for external-site dropdowns.</p>
+</body>
+</html>
