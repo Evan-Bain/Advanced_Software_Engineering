@@ -1,0 +1,20 @@
+CSV Import Summary
+==================
+File: /var/www/html/assignment1/aed497.csv
+Total rows processed: 5044212
+Successfully imported: 4774721
+Total error rows: 269491
+Total import time (seconds): 3,947.5907
+Effective rows per second: 1,209.5279
+
+Error Breakdown
+--------------
+blank_record: 31606
+wrong_column_count: 31660
+missing_required_field: 100393
+invalid_product_type: 18690
+invalid_serial_format: 20537
+duplicate_serial: 66605
+database_insert_error: 0
+
+Completed at: 2026-03-17 16:27:23
