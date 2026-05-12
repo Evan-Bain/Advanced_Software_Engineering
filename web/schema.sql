@@ -31,6 +31,9 @@ CREATE TABLE IF NOT EXISTS equipment (
     KEY idx_equipment_status (status),
     KEY idx_equipment_device_type_id (device_type_id),
     KEY idx_equipment_manufacturer_id (manufacturer_id),
+    KEY idx_equipment_type_status_id (device_type_id, status, device_id),
+    KEY idx_equipment_manufacturer_status_id (manufacturer_id, status, device_id),
+    KEY idx_equipment_type_manufacturer_status_id (device_type_id, manufacturer_id, status, device_id),
     CONSTRAINT fk_equipment_device_type
         FOREIGN KEY (device_type_id) REFERENCES device_types(device_type_id),
     CONSTRAINT fk_equipment_manufacturer

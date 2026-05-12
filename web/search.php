@@ -9,6 +9,30 @@ $activeManufacturers = getActiveManufacturers($pdo);
 $searchMode = $_GET['search_mode'] ?? '';
 $results = [];
 $errorMessage = '';
+$totalResults = 0;
+$pageSize = 100;
+$page = max(1, (int) ($_GET['page'] ?? 1));
+$offset = ($page - 1) * $pageSize;
+
+function buildPageUrl(int $page): string
+{
+    $params = $_GET;
+    $params['page'] = $page;
+    return 'search.php?' . http_build_query($params);
+}
+
+function selectedIfMatches(string $actual, string $expected): string
+{
+    return $actual === $expected ? ' selected' : '';
+}
+
+function normalizePageOffset(int $totalResults, int $pageSize, int &$page, int &$offset): void
+{
+    if ($totalResults > 0 && $offset >= $totalResults) {
+        $page = (int) ceil($totalResults / $pageSize);
+        $offset = ($page - 1) * $pageSize;
+    }
+}
 
 if ($searchMode !== '') {
     try {
@@ -22,22 +46,29 @@ if ($searchMode !== '') {
                     break;
                 }
 
-                $sql = "SELECT e.device_id, dt.type_name, m.manufacturer_name, e.serial_number, e.status
-                        FROM equipment e
-                        INNER JOIN device_types dt ON e.device_type_id = dt.device_type_id
-                        INNER JOIN manufacturers m ON e.manufacturer_id = m.manufacturer_id
-                        WHERE e.status = 'active'
-                          AND dt.status = 'active'
-                          AND m.status = 'active'
-                          AND e.device_type_id = :device_type_id";
+                $fromSql = "FROM equipment e
+                            INNER JOIN device_types dt ON e.device_type_id = dt.device_type_id
+                            INNER JOIN manufacturers m ON e.manufacturer_id = m.manufacturer_id
+                            WHERE e.status = 'active'
+                              AND dt.status = 'active'
+                              AND m.status = 'active'
+                              AND e.device_type_id = :device_type_id";
                 $params = [':device_type_id' => (int) $deviceTypeId];
 
                 if ($manufacturerId !== 'all') {
-                    $sql .= ' AND e.manufacturer_id = :manufacturer_id';
+                    $fromSql .= ' AND e.manufacturer_id = :manufacturer_id';
                     $params[':manufacturer_id'] = (int) $manufacturerId;
                 }
 
-                $sql .= ' ORDER BY e.device_id';
+                $countStmt = $pdo->prepare("SELECT COUNT(*) $fromSql");
+                $countStmt->execute($params);
+                $totalResults = (int) $countStmt->fetchColumn();
+                normalizePageOffset($totalResults, $pageSize, $page, $offset);
+
+                $sql = "SELECT e.device_id, dt.type_name, m.manufacturer_name, e.serial_number, e.status
+                        $fromSql
+                        ORDER BY e.device_id
+                        LIMIT $pageSize OFFSET $offset";
                 $stmt = $pdo->prepare($sql);
                 $stmt->execute($params);
                 $results = $stmt->fetchAll();
@@ -52,22 +83,29 @@ if ($searchMode !== '') {
                     break;
                 }
 
-                $sql = "SELECT e.device_id, dt.type_name, m.manufacturer_name, e.serial_number, e.status
-                        FROM equipment e
-                        INNER JOIN device_types dt ON e.device_type_id = dt.device_type_id
-                        INNER JOIN manufacturers m ON e.manufacturer_id = m.manufacturer_id
-                        WHERE e.status = 'active'
-                          AND dt.status = 'active'
-                          AND m.status = 'active'
-                          AND e.manufacturer_id = :manufacturer_id";
+                $fromSql = "FROM equipment e
+                            INNER JOIN device_types dt ON e.device_type_id = dt.device_type_id
+                            INNER JOIN manufacturers m ON e.manufacturer_id = m.manufacturer_id
+                            WHERE e.status = 'active'
+                              AND dt.status = 'active'
+                              AND m.status = 'active'
+                              AND e.manufacturer_id = :manufacturer_id";
                 $params = [':manufacturer_id' => (int) $manufacturerId];
 
                 if ($deviceTypeId !== 'all') {
-                    $sql .= ' AND e.device_type_id = :device_type_id';
+                    $fromSql .= ' AND e.device_type_id = :device_type_id';
                     $params[':device_type_id'] = (int) $deviceTypeId;
                 }
 
-                $sql .= ' ORDER BY e.device_id';
+                $countStmt = $pdo->prepare("SELECT COUNT(*) $fromSql");
+                $countStmt->execute($params);
+                $totalResults = (int) $countStmt->fetchColumn();
+                normalizePageOffset($totalResults, $pageSize, $page, $offset);
+
+                $sql = "SELECT e.device_id, dt.type_name, m.manufacturer_name, e.serial_number, e.status
+                        $fromSql
+                        ORDER BY e.device_id
+                        LIMIT $pageSize OFFSET $offset";
                 $stmt = $pdo->prepare($sql);
                 $stmt->execute($params);
                 $results = $stmt->fetchAll();
@@ -92,22 +130,30 @@ if ($searchMode !== '') {
                 );
                 $stmt->execute([':serial_number' => $serialNumber]);
                 $results = $stmt->fetchAll();
+                $totalResults = count($results);
                 break;
 
             case 'search_all':
                 $statusFilter = $_GET['status_filter'] ?? 'all';
-                $sql = "SELECT e.device_id, dt.type_name, m.manufacturer_name, e.serial_number, e.status
-                        FROM equipment e
-                        INNER JOIN device_types dt ON e.device_type_id = dt.device_type_id
-                        INNER JOIN manufacturers m ON e.manufacturer_id = m.manufacturer_id";
+                $fromSql = "FROM equipment e
+                            INNER JOIN device_types dt ON e.device_type_id = dt.device_type_id
+                            INNER JOIN manufacturers m ON e.manufacturer_id = m.manufacturer_id";
                 $params = [];
 
                 if ($statusFilter === 'active' || $statusFilter === 'inactive') {
-                    $sql .= ' WHERE e.status = :status';
+                    $fromSql .= ' WHERE e.status = :status';
                     $params[':status'] = $statusFilter;
                 }
 
-                $sql .= ' ORDER BY e.device_id';
+                $countStmt = $pdo->prepare("SELECT COUNT(*) $fromSql");
+                $countStmt->execute($params);
+                $totalResults = (int) $countStmt->fetchColumn();
+                normalizePageOffset($totalResults, $pageSize, $page, $offset);
+
+                $sql = "SELECT e.device_id, dt.type_name, m.manufacturer_name, e.serial_number, e.status
+                        $fromSql
+                        ORDER BY e.device_id
+                        LIMIT $pageSize OFFSET $offset";
                 $stmt = $pdo->prepare($sql);
                 $stmt->execute($params);
                 $results = $stmt->fetchAll();
@@ -130,15 +176,15 @@ if ($searchMode !== '') {
         <select name="device_type_id" id="device_type_id" required>
             <option value="">Select One</option>
             <?php foreach ($activeDeviceTypes as $deviceType): ?>
-                <option value="<?= (int) $deviceType['device_type_id']; ?>"><?= e($deviceType['type_name']); ?></option>
+                <option value="<?= (int) $deviceType['device_type_id']; ?>"<?= selectedIfMatches((string) ($_GET['device_type_id'] ?? ''), (string) $deviceType['device_type_id']); ?>><?= e($deviceType['type_name']); ?></option>
             <?php endforeach; ?>
         </select>
         <br>
         <label for="manufacturer_id_by_type">Manufacturer</label>
         <select name="manufacturer_id" id="manufacturer_id_by_type">
-            <option value="all">All Active Manufacturers</option>
+            <option value="all"<?= selectedIfMatches((string) ($_GET['manufacturer_id'] ?? 'all'), 'all'); ?>>All Active Manufacturers</option>
             <?php foreach ($activeManufacturers as $manufacturer): ?>
-                <option value="<?= (int) $manufacturer['manufacturer_id']; ?>"><?= e($manufacturer['manufacturer_name']); ?></option>
+                <option value="<?= (int) $manufacturer['manufacturer_id']; ?>"<?= selectedIfMatches((string) ($_GET['manufacturer_id'] ?? ''), (string) $manufacturer['manufacturer_id']); ?>><?= e($manufacturer['manufacturer_name']); ?></option>
             <?php endforeach; ?>
         </select>
         <br>
@@ -154,15 +200,15 @@ if ($searchMode !== '') {
         <select name="manufacturer_id" id="manufacturer_id" required>
             <option value="">Select One</option>
             <?php foreach ($activeManufacturers as $manufacturer): ?>
-                <option value="<?= (int) $manufacturer['manufacturer_id']; ?>"><?= e($manufacturer['manufacturer_name']); ?></option>
+                <option value="<?= (int) $manufacturer['manufacturer_id']; ?>"<?= selectedIfMatches((string) ($_GET['manufacturer_id'] ?? ''), (string) $manufacturer['manufacturer_id']); ?>><?= e($manufacturer['manufacturer_name']); ?></option>
             <?php endforeach; ?>
         </select>
         <br>
         <label for="device_type_id_by_manufacturer">Device Type</label>
         <select name="device_type_id" id="device_type_id_by_manufacturer">
-            <option value="all">All Active Device Types</option>
+            <option value="all"<?= selectedIfMatches((string) ($_GET['device_type_id'] ?? 'all'), 'all'); ?>>All Active Device Types</option>
             <?php foreach ($activeDeviceTypes as $deviceType): ?>
-                <option value="<?= (int) $deviceType['device_type_id']; ?>"><?= e($deviceType['type_name']); ?></option>
+                <option value="<?= (int) $deviceType['device_type_id']; ?>"<?= selectedIfMatches((string) ($_GET['device_type_id'] ?? ''), (string) $deviceType['device_type_id']); ?>><?= e($deviceType['type_name']); ?></option>
             <?php endforeach; ?>
         </select>
         <br>
@@ -175,7 +221,7 @@ if ($searchMode !== '') {
     <form method="get" action="search.php">
         <input type="hidden" name="search_mode" value="serial_number">
         <label for="serial_number">Serial Number</label>
-        <input type="text" name="serial_number" id="serial_number" maxlength="67" required>
+        <input type="text" name="serial_number" id="serial_number" maxlength="67" value="<?= e($_GET['serial_number'] ?? ''); ?>" required>
         <br>
         <button type="submit">Search by Serial Number</button>
     </form>
@@ -187,9 +233,9 @@ if ($searchMode !== '') {
         <input type="hidden" name="search_mode" value="search_all">
         <label for="status_filter">Status Filter</label>
         <select name="status_filter" id="status_filter">
-            <option value="active">Only Active</option>
-            <option value="inactive">Only Inactive</option>
-            <option value="all">All</option>
+            <option value="active"<?= selectedIfMatches((string) ($_GET['status_filter'] ?? 'active'), 'active'); ?>>Only Active</option>
+            <option value="inactive"<?= selectedIfMatches((string) ($_GET['status_filter'] ?? 'active'), 'inactive'); ?>>Only Inactive</option>
+            <option value="all"<?= selectedIfMatches((string) ($_GET['status_filter'] ?? 'active'), 'all'); ?>>All</option>
         </select>
         <br>
         <button type="submit">Search All</button>
@@ -206,6 +252,15 @@ if ($searchMode !== '') {
         <?php if (count($results) === 0): ?>
             <p>No equipment matched your search.</p>
         <?php else: ?>
+            <?php
+                $totalPages = max(1, (int) ceil($totalResults / $pageSize));
+                $firstResultNumber = $offset + 1;
+                $lastResultNumber = min($offset + count($results), $totalResults);
+            ?>
+            <p>
+                Showing <?= (int) $firstResultNumber; ?>-<?= (int) $lastResultNumber; ?>
+                of <?= (int) $totalResults; ?> matching equipment records.
+            </p>
             <table>
                 <thead>
                     <tr>
@@ -230,6 +285,17 @@ if ($searchMode !== '') {
                     <?php endforeach; ?>
                 </tbody>
             </table>
+            <?php if ($totalPages > 1): ?>
+                <p class="actions">
+                    <?php if ($page > 1): ?>
+                        <a href="<?= e(buildPageUrl($page - 1)); ?>">Previous</a>
+                    <?php endif; ?>
+                    Page <?= (int) $page; ?> of <?= (int) $totalPages; ?>
+                    <?php if ($page < $totalPages): ?>
+                        <a href="<?= e(buildPageUrl($page + 1)); ?>">Next</a>
+                    <?php endif; ?>
+                </p>
+            <?php endif; ?>
         <?php endif; ?>
     </div>
 <?php endif; ?>
