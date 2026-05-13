@@ -11,27 +11,61 @@ function h(?string $value): string
 function apiCall(string $method, string $endpoint, array $params = []): array
 {
     $url = rtrim(API_BASE_URL, '/') . '/' . ltrim($endpoint, '/');
-    $options = [
-        'http' => [
-            'method' => $method,
-            'ignore_errors' => true,
-            'header' => "Content-Type: application/x-www-form-urlencoded\r\n",
-        ],
-    ];
+    $body = '';
 
     if ($method === 'GET' && count($params) > 0) {
         $url .= '?' . http_build_query($params);
     } elseif ($method !== 'GET') {
-        $options['http']['content'] = http_build_query($params);
+        $body = http_build_query($params);
     }
 
-    $response = @file_get_contents($url, false, stream_context_create($options));
-    if ($response === false) {
-        return [
-            'success' => false,
-            'message' => 'API request failed. Check API_BASE_URL and server availability.',
-            'data' => [],
+    if (function_exists('curl_init')) {
+        $curl = curl_init($url);
+        curl_setopt_array($curl, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_CUSTOMREQUEST => $method,
+            CURLOPT_HTTPHEADER => ['Content-Type: application/x-www-form-urlencoded'],
+            CURLOPT_TIMEOUT => 10,
+        ]);
+
+        if ($method !== 'GET') {
+            curl_setopt($curl, CURLOPT_POSTFIELDS, $body);
+        }
+
+        $response = curl_exec($curl);
+        $error = curl_error($curl);
+        curl_close($curl);
+
+        if ($response === false) {
+            return [
+                'success' => false,
+                'message' => 'API request failed: ' . ($error !== '' ? $error : 'cURL could not reach the API.'),
+                'data' => [],
+            ];
+        }
+    } else {
+        $options = [
+        'http' => [
+            'method' => $method,
+            'ignore_errors' => true,
+            'header' => "Content-Type: application/x-www-form-urlencoded\r\n",
+            'timeout' => 10,
+        ],
         ];
+
+        if ($method !== 'GET') {
+            $options['http']['content'] = $body;
+        }
+
+        $response = @file_get_contents($url, false, stream_context_create($options));
+        if ($response === false) {
+            $error = error_get_last();
+            return [
+                'success' => false,
+                'message' => 'API request failed: ' . ($error['message'] ?? 'Check API_BASE_URL and server availability.'),
+                'data' => [],
+            ];
+        }
     }
 
     $decoded = json_decode($response, true);
