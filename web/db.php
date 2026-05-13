@@ -1,11 +1,6 @@
 <?php
 declare(strict_types=1);
 
-/**
- * Returns a PDO connection for the equipment web application.
- *
- * Update these values if your server uses different credentials.
- */
 function getDbConnection(): PDO
 {
     $host = '127.0.0.1';

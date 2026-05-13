@@ -3,41 +3,26 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/db.php';
 
-/**
- * Escapes output for HTML.
- */
 function e(?string $value): string
 {
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 }
 
-/**
- * Valid serial numbers must be SN- followed by 64 uppercase hex characters.
- */
 function isValidSerialNumber(string $serialNumber): bool
 {
     return preg_match('/^SN-[0-9A-F]{64}$/', $serialNumber) === 1;
 }
 
-/**
- * Device types allow alphabet letters and spaces only.
- */
 function isValidDeviceTypeName(string $typeName): bool
 {
     return preg_match('/^[A-Za-z ]+$/', $typeName) === 1;
 }
 
-/**
- * Manufacturers allow alphabet letters and spaces only.
- */
 function isValidManufacturerName(string $manufacturerName): bool
 {
     return preg_match('/^[A-Za-z ]+$/', $manufacturerName) === 1;
 }
 
-/**
- * Normalizes names entered by the user.
- */
 function normalizeName(string $value): string
 {
     $value = trim($value);
@@ -45,11 +30,6 @@ function normalizeName(string $value): string
     return (string) $value;
 }
 
-/**
- * Returns all active device types.
- *
- * @return array<int, array<string, mixed>>
- */
 function getActiveDeviceTypes(PDO $pdo): array
 {
     $stmt = $pdo->query(
@@ -62,11 +42,6 @@ function getActiveDeviceTypes(PDO $pdo): array
     return $stmt->fetchAll();
 }
 
-/**
- * Returns all active manufacturers.
- *
- * @return array<int, array<string, mixed>>
- */
 function getActiveManufacturers(PDO $pdo): array
 {
     $stmt = $pdo->query(
@@ -79,9 +54,6 @@ function getActiveManufacturers(PDO $pdo): array
     return $stmt->fetchAll();
 }
 
-/**
- * Checks whether a serial number already belongs to another record.
- */
 function isSerialNumberInUse(PDO $pdo, string $serialNumber, ?int $excludeDeviceId = null): bool
 {
     if ($excludeDeviceId === null) {
@@ -105,9 +77,6 @@ function isSerialNumberInUse(PDO $pdo, string $serialNumber, ?int $excludeDevice
     return (int) $stmt->fetchColumn() > 0;
 }
 
-/**
- * Checks whether a device type already exists, excluding one row if needed.
- */
 function deviceTypeNameExists(PDO $pdo, string $typeName, ?int $excludeId = null): bool
 {
     if ($excludeId === null) {
@@ -131,9 +100,6 @@ function deviceTypeNameExists(PDO $pdo, string $typeName, ?int $excludeId = null
     return (int) $stmt->fetchColumn() > 0;
 }
 
-/**
- * Checks whether a manufacturer name already exists, excluding one row if needed.
- */
 function manufacturerNameExists(PDO $pdo, string $manufacturerName, ?int $excludeId = null): bool
 {
     if ($excludeId === null) {
