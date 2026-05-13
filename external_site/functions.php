@@ -26,6 +26,9 @@ function apiCall(string $method, string $endpoint, array $params = []): array
             CURLOPT_CUSTOMREQUEST => $method,
             CURLOPT_HTTPHEADER => ['Content-Type: application/x-www-form-urlencoded'],
             CURLOPT_TIMEOUT => 10,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYHOST => false,
         ]);
 
         if ($method !== 'GET') {
@@ -45,12 +48,18 @@ function apiCall(string $method, string $endpoint, array $params = []): array
         }
     } else {
         $options = [
-        'http' => [
-            'method' => $method,
-            'ignore_errors' => true,
-            'header' => "Content-Type: application/x-www-form-urlencoded\r\n",
-            'timeout' => 10,
-        ],
+            'http' => [
+                'method' => $method,
+                'ignore_errors' => true,
+                'follow_location' => 1,
+                'max_redirects' => 5,
+                'header' => "Content-Type: application/x-www-form-urlencoded\r\n",
+                'timeout' => 10,
+            ],
+            'ssl' => [
+                'verify_peer' => false,
+                'verify_peer_name' => false,
+            ],
         ];
 
         if ($method !== 'GET') {
