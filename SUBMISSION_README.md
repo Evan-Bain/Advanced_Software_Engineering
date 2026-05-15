@@ -33,9 +33,9 @@ http://ec2-3-138-156-77.us-east-2.compute.amazonaws.com/api
 
 Public DNS: `ec2-18-119-235-98.us-east-2.compute.amazonaws.com`
 
-1. Upload the contents of `external_site/` to `/var/www/html` on the external server. If you upload the folder itself, the included Nginx config also falls back to `/var/www/html/external_site/index.php`.
+1. Upload the `external_site/` folder to `/var/www/html/external_site` on the external server.
 2. Copy or merge `nginx/external_site_server.conf` into your Nginx site config.
-3. Confirm the Nginx root is `/var/www/html`.
+3. Confirm the Nginx root is `/var/www/html` and that `/external_site` redirects to `/external_site/index.php`.
 4. Replace `php8.3-fpm.sock` if your server uses a different PHP-FPM version.
 5. Run:
 

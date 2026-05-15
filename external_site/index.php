@@ -48,13 +48,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 if (isset($_GET['search_mode'])) {
-    $searchResponse = apiCall('GET', 'equipment.php', [
-        'search_mode' => $_GET['search_mode'] ?? 'all',
-        'device_type_id' => $_GET['device_type_id'] ?? '',
-        'manufacturer_id' => $_GET['manufacturer_id'] ?? '',
-        'serial_number' => $_GET['serial_number'] ?? '',
+    $searchMode = (string) ($_GET['search_mode'] ?? 'all');
+    $searchParams = [
+        'search_mode' => $searchMode,
         'status' => $_GET['status'] ?? 'active',
-    ]);
+    ];
+
+    if ($searchMode === 'device_type') {
+        $searchParams['device_type_id'] = $_GET['device_type_id'] ?? '';
+        $searchParams['manufacturer_id'] = $_GET['manufacturer_id'] ?? 'all';
+    } elseif ($searchMode === 'manufacturer') {
+        $searchParams['manufacturer_id'] = $_GET['manufacturer_id'] ?? '';
+        $searchParams['device_type_id'] = $_GET['device_type_id'] ?? 'all';
+    } elseif ($searchMode === 'serial_number') {
+        $searchParams['serial_number'] = $_GET['serial_number'] ?? '';
+    }
+
+    $searchResponse = apiCall('GET', 'equipment.php', $searchParams);
 }
 
 if (isset($_GET['view_device_id'])) {
@@ -76,43 +86,108 @@ $equipmentRows = $equipmentResponse['data']['equipment'] ?? [];
 
 <div class="section" id="search">
     <h2>Search Equipment</h2>
-    <form method="get" action="<?= h(siteUrl('index.php#search')); ?>">
-        <label for="search_mode">Search Type</label>
-        <select name="search_mode" id="search_mode">
-            <option value="all"<?= selected((string) ($_GET['search_mode'] ?? 'all'), 'all'); ?>>All Equipment</option>
-            <option value="device_type"<?= selected((string) ($_GET['search_mode'] ?? ''), 'device_type'); ?>>Device Type</option>
-            <option value="manufacturer"<?= selected((string) ($_GET['search_mode'] ?? ''), 'manufacturer'); ?>>Manufacturer</option>
-            <option value="serial_number"<?= selected((string) ($_GET['search_mode'] ?? ''), 'serial_number'); ?>>Serial Number</option>
-        </select>
+    <div class="grid">
+        <div>
+            <h3>By Device Type</h3>
+            <form method="get" action="<?= h(siteUrl('index.php#search')); ?>">
+                <input type="hidden" name="search_mode" value="device_type">
 
-        <label for="search_device_type_id">Device Type</label>
-        <select name="device_type_id" id="search_device_type_id">
-            <option value="all">All Device Types</option>
-            <?php foreach ($deviceTypes as $deviceType): ?>
-                <option value="<?= (int) $deviceType['device_type_id']; ?>"<?= selected((string) ($_GET['device_type_id'] ?? ''), (string) $deviceType['device_type_id']); ?>><?= h($deviceType['type_name']); ?></option>
-            <?php endforeach; ?>
-        </select>
+                <label for="search_device_type_id">Device Type</label>
+                <select name="device_type_id" id="search_device_type_id" required>
+                    <option value="">Select Device Type</option>
+                    <?php foreach ($deviceTypes as $deviceType): ?>
+                        <option value="<?= (int) $deviceType['device_type_id']; ?>"<?= selected((string) ($_GET['device_type_id'] ?? ''), (string) $deviceType['device_type_id']); ?>><?= h($deviceType['type_name']); ?></option>
+                    <?php endforeach; ?>
+                </select>
 
-        <label for="search_manufacturer_id">Manufacturer</label>
-        <select name="manufacturer_id" id="search_manufacturer_id">
-            <option value="all">All Manufacturers</option>
-            <?php foreach ($manufacturers as $manufacturer): ?>
-                <option value="<?= (int) $manufacturer['manufacturer_id']; ?>"<?= selected((string) ($_GET['manufacturer_id'] ?? ''), (string) $manufacturer['manufacturer_id']); ?>><?= h($manufacturer['manufacturer_name']); ?></option>
-            <?php endforeach; ?>
-        </select>
+                <label for="search_type_manufacturer_id">Manufacturer</label>
+                <select name="manufacturer_id" id="search_type_manufacturer_id">
+                    <option value="all">All Manufacturers</option>
+                    <?php foreach ($manufacturers as $manufacturer): ?>
+                        <option value="<?= (int) $manufacturer['manufacturer_id']; ?>"<?= selected((string) ($_GET['manufacturer_id'] ?? ''), (string) $manufacturer['manufacturer_id']); ?>><?= h($manufacturer['manufacturer_name']); ?></option>
+                    <?php endforeach; ?>
+                </select>
 
-        <label for="search_serial_number">Serial Number</label>
-        <input type="text" name="serial_number" id="search_serial_number" maxlength="67" value="<?= h($_GET['serial_number'] ?? ''); ?>">
+                <label for="search_type_status">Status</label>
+                <select name="status" id="search_type_status">
+                    <option value="active"<?= selected((string) ($_GET['status'] ?? 'active'), 'active'); ?>>Active</option>
+                    <option value="inactive"<?= selected((string) ($_GET['status'] ?? ''), 'inactive'); ?>>Inactive</option>
+                    <option value="all"<?= selected((string) ($_GET['status'] ?? ''), 'all'); ?>>All</option>
+                </select>
 
-        <label for="search_status">Status</label>
-        <select name="status" id="search_status">
-            <option value="active"<?= selected((string) ($_GET['status'] ?? 'active'), 'active'); ?>>Active</option>
-            <option value="inactive"<?= selected((string) ($_GET['status'] ?? ''), 'inactive'); ?>>Inactive</option>
-            <option value="all"<?= selected((string) ($_GET['status'] ?? ''), 'all'); ?>>All</option>
-        </select>
+                <button type="submit">Search Device Type</button>
+            </form>
+        </div>
 
-        <button type="submit">Search</button>
-    </form>
+        <div>
+            <h3>By Manufacturer</h3>
+            <form method="get" action="<?= h(siteUrl('index.php#search')); ?>">
+                <input type="hidden" name="search_mode" value="manufacturer">
+
+                <label for="search_manufacturer_id">Manufacturer</label>
+                <select name="manufacturer_id" id="search_manufacturer_id" required>
+                    <option value="">Select Manufacturer</option>
+                    <?php foreach ($manufacturers as $manufacturer): ?>
+                        <option value="<?= (int) $manufacturer['manufacturer_id']; ?>"<?= selected((string) ($_GET['manufacturer_id'] ?? ''), (string) $manufacturer['manufacturer_id']); ?>><?= h($manufacturer['manufacturer_name']); ?></option>
+                    <?php endforeach; ?>
+                </select>
+
+                <label for="search_manufacturer_device_type_id">Device Type</label>
+                <select name="device_type_id" id="search_manufacturer_device_type_id">
+                    <option value="all">All Device Types</option>
+                    <?php foreach ($deviceTypes as $deviceType): ?>
+                        <option value="<?= (int) $deviceType['device_type_id']; ?>"<?= selected((string) ($_GET['device_type_id'] ?? ''), (string) $deviceType['device_type_id']); ?>><?= h($deviceType['type_name']); ?></option>
+                    <?php endforeach; ?>
+                </select>
+
+                <label for="search_manufacturer_status">Status</label>
+                <select name="status" id="search_manufacturer_status">
+                    <option value="active"<?= selected((string) ($_GET['status'] ?? 'active'), 'active'); ?>>Active</option>
+                    <option value="inactive"<?= selected((string) ($_GET['status'] ?? ''), 'inactive'); ?>>Inactive</option>
+                    <option value="all"<?= selected((string) ($_GET['status'] ?? ''), 'all'); ?>>All</option>
+                </select>
+
+                <button type="submit">Search Manufacturer</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="grid">
+        <div>
+            <h3>By Serial Number</h3>
+            <form method="get" action="<?= h(siteUrl('index.php#search')); ?>">
+                <input type="hidden" name="search_mode" value="serial_number">
+
+                <label for="search_serial_number">Serial Number</label>
+                <input type="text" name="serial_number" id="search_serial_number" maxlength="67" value="<?= h($_GET['serial_number'] ?? ''); ?>" required>
+
+                <label for="search_serial_status">Status</label>
+                <select name="status" id="search_serial_status">
+                    <option value="active"<?= selected((string) ($_GET['status'] ?? 'active'), 'active'); ?>>Active</option>
+                    <option value="inactive"<?= selected((string) ($_GET['status'] ?? ''), 'inactive'); ?>>Inactive</option>
+                    <option value="all"<?= selected((string) ($_GET['status'] ?? ''), 'all'); ?>>All</option>
+                </select>
+
+                <button type="submit">Search Serial Number</button>
+            </form>
+        </div>
+
+        <div>
+            <h3>All Equipment</h3>
+            <form method="get" action="<?= h(siteUrl('index.php#search')); ?>">
+                <input type="hidden" name="search_mode" value="all">
+
+                <label for="search_all_status">Status</label>
+                <select name="status" id="search_all_status">
+                    <option value="active"<?= selected((string) ($_GET['status'] ?? 'active'), 'active'); ?>>Active</option>
+                    <option value="inactive"<?= selected((string) ($_GET['status'] ?? ''), 'inactive'); ?>>Inactive</option>
+                    <option value="all"<?= selected((string) ($_GET['status'] ?? ''), 'all'); ?>>All</option>
+                </select>
+
+                <button type="submit">Search All</button>
+            </form>
+        </div>
+    </div>
 
     <?php if ($searchResponse !== null): ?>
         <?= responseMessage($searchResponse); ?>

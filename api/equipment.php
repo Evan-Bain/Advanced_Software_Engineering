@@ -44,6 +44,9 @@ try {
         }
 
         if ($searchMode === 'device_type') {
+            if (!isset($input['device_type_id']) || $input['device_type_id'] === '' || $input['device_type_id'] === 'all') {
+                apiResponse(false, 'Invalid search data: please select a specific device type.', [], 400);
+            }
             $deviceTypeId = intParam($input, 'device_type_id');
             if (fetchDeviceType($pdo, $deviceTypeId) === null) {
                 apiResponse(false, 'Invalid search data: device type was not found.', [], 400);
@@ -63,6 +66,9 @@ try {
                 $params[':manufacturer_id'] = (int) $manufacturerId;
             }
         } elseif ($searchMode === 'manufacturer') {
+            if (!isset($input['manufacturer_id']) || $input['manufacturer_id'] === '' || $input['manufacturer_id'] === 'all') {
+                apiResponse(false, 'Invalid search data: please select a specific manufacturer.', [], 400);
+            }
             $manufacturerId = intParam($input, 'manufacturer_id');
             if (fetchManufacturer($pdo, $manufacturerId) === null) {
                 apiResponse(false, 'Invalid search data: manufacturer was not found.', [], 400);
