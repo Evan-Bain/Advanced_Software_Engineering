@@ -8,10 +8,20 @@ function h(?string $value): string
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 }
 
+function siteUrl(string $path = ''): string
+{
+    return rtrim(EXTERNAL_SITE_BASE_PATH, '/') . '/' . ltrim($path, '/');
+}
+
 function apiCall(string $method, string $endpoint, array $params = []): array
 {
     $url = rtrim(API_BASE_URL, '/') . '/' . ltrim($endpoint, '/');
     $body = '';
+    $headers = [
+        'Accept: application/json',
+        'Content-Type: application/x-www-form-urlencoded',
+        'Origin: ' . EXTERNAL_SITE_ORIGIN,
+    ];
 
     if ($method === 'GET' && count($params) > 0) {
         $url .= '?' . http_build_query($params);
@@ -24,7 +34,8 @@ function apiCall(string $method, string $endpoint, array $params = []): array
         curl_setopt_array($curl, [
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_CUSTOMREQUEST => $method,
-            CURLOPT_HTTPHEADER => ['Content-Type: application/x-www-form-urlencoded'],
+            CURLOPT_HTTPHEADER => $headers,
+            CURLOPT_HEADER => true,
             CURLOPT_TIMEOUT => 10,
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_SSL_VERIFYPEER => false,
@@ -37,6 +48,8 @@ function apiCall(string $method, string $endpoint, array $params = []): array
 
         $response = curl_exec($curl);
         $error = curl_error($curl);
+        $statusCode = (int) curl_getinfo($curl, CURLINFO_RESPONSE_CODE);
+        $headerSize = (int) curl_getinfo($curl, CURLINFO_HEADER_SIZE);
         curl_close($curl);
 
         if ($response === false) {
@@ -46,6 +59,8 @@ function apiCall(string $method, string $endpoint, array $params = []): array
                 'data' => [],
             ];
         }
+
+        $response = substr($response, $headerSize);
     } else {
         $options = [
             'http' => [
@@ -53,7 +68,7 @@ function apiCall(string $method, string $endpoint, array $params = []): array
                 'ignore_errors' => true,
                 'follow_location' => 1,
                 'max_redirects' => 5,
-                'header' => "Content-Type: application/x-www-form-urlencoded\r\n",
+                'header' => implode("\r\n", $headers) . "\r\n",
                 'timeout' => 10,
             ],
             'ssl' => [
@@ -75,13 +90,27 @@ function apiCall(string $method, string $endpoint, array $params = []): array
                 'data' => [],
             ];
         }
+
+        $statusCode = 0;
+        if (isset($http_response_header) && is_array($http_response_header)) {
+            foreach ($http_response_header as $header) {
+                if (preg_match('/^HTTP\/\S+\s+(\d+)/', $header, $matches) === 1) {
+                    $statusCode = (int) $matches[1];
+                }
+            }
+        }
     }
 
     $decoded = json_decode($response, true);
     if (!is_array($decoded)) {
+        $detail = trim(strip_tags((string) $response));
+        if ($detail !== '') {
+            $detail = ' Response: ' . substr($detail, 0, 160);
+        }
+
         return [
             'success' => false,
-            'message' => 'API returned invalid JSON.',
+            'message' => 'API returned invalid JSON' . ($statusCode > 0 ? " with HTTP $statusCode." : '.') . $detail,
             'data' => [],
         ];
     }

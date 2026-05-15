@@ -68,10 +68,10 @@ require_once __DIR__ . '/functions.php';
             <h1>External Equipment Client</h1>
             <p class="tagline">This site uses API calls to manage the equipment database.</p>
             <nav>
-                <a href="#search">Search</a>
-                <a href="#add">Add New</a>
-                <a href="#update">Update Status</a>
-                <a href="#view">View</a>
+                <a href="<?= h(siteUrl('index.php#search')); ?>">Search</a>
+                <a href="<?= h(siteUrl('index.php#add')); ?>">Add New</a>
+                <a href="<?= h(siteUrl('index.php#update')); ?>">Update Status</a>
+                <a href="<?= h(siteUrl('index.php#view')); ?>">View</a>
             </nav>
         </div>
     </header>

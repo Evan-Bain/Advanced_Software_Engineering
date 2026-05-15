@@ -76,7 +76,7 @@ $equipmentRows = $equipmentResponse['data']['equipment'] ?? [];
 
 <div class="section" id="search">
     <h2>Search Equipment</h2>
-    <form method="get" action="index.php#search">
+    <form method="get" action="<?= h(siteUrl('index.php#search')); ?>">
         <label for="search_mode">Search Type</label>
         <select name="search_mode" id="search_mode">
             <option value="all"<?= selected((string) ($_GET['search_mode'] ?? 'all'), 'all'); ?>>All Equipment</option>
@@ -137,7 +137,7 @@ $equipmentRows = $equipmentResponse['data']['equipment'] ?? [];
                             <td><?= h($row['manufacturer_name']); ?></td>
                             <td><?= h($row['serial_number']); ?></td>
                             <td><?= h($row['status']); ?></td>
-                            <td><a href="index.php?view_device_id=<?= (int) $row['device_id']; ?>#view">View</a></td>
+                            <td><a href="<?= h(siteUrl('index.php?view_device_id=' . (int) $row['device_id'] . '#view')); ?>">View</a></td>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>
@@ -148,7 +148,7 @@ $equipmentRows = $equipmentResponse['data']['equipment'] ?? [];
 
 <div class="section" id="view">
     <h2>View Single Equipment Entry</h2>
-    <form method="get" action="index.php#view">
+    <form method="get" action="<?= h(siteUrl('index.php#view')); ?>">
         <label for="view_device_id">Equipment</label>
         <select name="view_device_id" id="view_device_id" required>
             <option value="">Select Equipment</option>
@@ -190,7 +190,7 @@ $equipmentRows = $equipmentResponse['data']['equipment'] ?? [];
 <div class="grid" id="add">
     <div class="section">
         <h2>Add New Device Type</h2>
-        <form method="post" action="index.php#add">
+        <form method="post" action="<?= h(siteUrl('index.php#add')); ?>">
             <input type="hidden" name="action" value="add_device_type">
             <label for="add_type_name">Device Type Name</label>
             <input type="text" name="type_name" id="add_type_name" maxlength="100" required>
@@ -200,7 +200,7 @@ $equipmentRows = $equipmentResponse['data']['equipment'] ?? [];
 
     <div class="section">
         <h2>Add New Manufacturer</h2>
-        <form method="post" action="index.php#add">
+        <form method="post" action="<?= h(siteUrl('index.php#add')); ?>">
             <input type="hidden" name="action" value="add_manufacturer">
             <label for="add_manufacturer_name">Manufacturer Name</label>
             <input type="text" name="manufacturer_name" id="add_manufacturer_name" maxlength="100" required>
@@ -211,7 +211,7 @@ $equipmentRows = $equipmentResponse['data']['equipment'] ?? [];
 
 <div class="section">
     <h2>Add New Equipment</h2>
-    <form method="post" action="index.php#add">
+    <form method="post" action="<?= h(siteUrl('index.php#add')); ?>">
         <input type="hidden" name="action" value="add_equipment">
 
         <label for="add_device_type_id">Active Device Type</label>
@@ -240,7 +240,7 @@ $equipmentRows = $equipmentResponse['data']['equipment'] ?? [];
 <div class="grid" id="update">
     <div class="section">
         <h2>Modify Device Type</h2>
-        <form method="post" action="index.php#update">
+        <form method="post" action="<?= h(siteUrl('index.php#update')); ?>">
             <input type="hidden" name="action" value="update_device_type">
             <label for="update_device_type_id">Device Type ID</label>
             <input type="number" name="device_type_id" id="update_device_type_id" min="1" required>
@@ -257,7 +257,7 @@ $equipmentRows = $equipmentResponse['data']['equipment'] ?? [];
 
     <div class="section">
         <h2>Modify Manufacturer</h2>
-        <form method="post" action="index.php#update">
+        <form method="post" action="<?= h(siteUrl('index.php#update')); ?>">
             <input type="hidden" name="action" value="update_manufacturer">
             <label for="update_manufacturer_id">Manufacturer ID</label>
             <input type="number" name="manufacturer_id" id="update_manufacturer_id" min="1" required>
@@ -275,7 +275,7 @@ $equipmentRows = $equipmentResponse['data']['equipment'] ?? [];
 
 <div class="section">
     <h2>Modify Equipment</h2>
-    <form method="post" action="index.php#update">
+    <form method="post" action="<?= h(siteUrl('index.php#update')); ?>">
         <input type="hidden" name="action" value="update_equipment">
 
         <label for="update_device_id">Equipment ID</label>
